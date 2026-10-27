@@ -19,6 +19,8 @@ struct ReservationForm: View {
     @State private var occasion = ""
     @State private var notes = ""
     @State private var childrenCount = 0
+    @State private var previewText = ""
+    @State private var showMessage = true
     
     var body: some View {
         Form{
@@ -28,7 +30,7 @@ struct ReservationForm: View {
                     Image(systemName:"fork.knife")
                         .foregroundStyle(.green)
                         .font(.title2)
-                    VStack{
+                    VStack(alignment: .leading){
                         Text(restaurantName)
                             .font(.title3)
                             .bold()
@@ -40,36 +42,93 @@ struct ReservationForm: View {
             }
             //Reservation details
             Section(header: Text("Reservation Details")){
-                TextField("Name", text: $userName)
-                    .autocorrectionDisabled(true)
-                    .textInputAutocapitalization(.words)
-                Stepper("Guests: \(guestCount)",value:$guestCount, in:1...10)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("Name", text: $userName)
+                        .autocorrectionDisabled(true)
+                        .textInputAutocapitalization(.words)
+                    
+                    if userName.isEmpty {
+                        Text("Please enter a name")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                }.animation(.default, value: userName.isEmpty)
+                
+                VStack(alignment: .leading, spacing: 10){
+                    Stepper("Guests: \(guestCount)",value:$guestCount, in:1...10)
+                    
+                    if guestCount >= 8 {
+                        Text("Large group - we'll do our best to accommodate you.")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
+                }
             }
             
             Section(header: Text("Contact")){
-                TextField("Phone", text:$phoneNumber)
+                VStack(alignment: .leading, spacing: 4){
+                    TextField("Phone", text:$phoneNumber)
+                    
+                    if phoneNumber.isEmpty {
+                        Text("Phone number is required")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    } else if phoneNumber.count < 10 {
+                            Text ("Number too short - keep typing")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }  else {
+                        Text("Looks good")
+                            .font(.footnote)
+                            .foregroundStyle(.green)
+                    }
+                }.animation(.default, value: phoneNumber)
             }
             
             Section(header: Text("Optional")){
                 TextField("Occasion (Birthday, Anniversary, etc.)", text:$occasion)
                 TextField("Notes", text:$notes)
-                Stepper("Children: \(childrenCount)",value:$childrenCount, in:0...5)
+                VStack(alignment: .leading, spacing:10){
+                    Stepper("Children: \(childrenCount)",value:$childrenCount, in:0...5)
+                    
+                    if childrenCount > 0 {
+                        Text("Kids menu available")
+                            .font(.footnote)
+                            .foregroundStyle(.blue)
+                    }
+                }
+                Toggle("Show an special text",isOn: $showMessage)
+                if showMessage {
+                    Text("Discount %")
+                        .foregroundStyle(.green)
+                }
             }
             
-            Section(){
-                Text("Preview reservation").foregroundStyle(.blue)
+            Section(header: Text("Actions")){
+                HStack{
+                    Spacer()
+                    Button("Preview reservation details"){
+                        previewText = """
+                            Name: \(userName)
+                            Guests: \(guestCount)
+                            Phone: \(phoneNumber)
+                            Children: \(childrenCount)
+                            Occasion: \(occasion)
+                            Notes: \(notes)
+                        """
+                    }.buttonStyle(.borderedProminent)
+                        .disabled(userName.isEmpty || phoneNumber.count < 10)
+                        .foregroundStyle(.white)
+                        .bold()
+                        .tint(.blue)
+
+                    Spacer()
+                }
             }
             
             //Printing information
             Section(header:Text("Preview")){
-                Text("""
-                    Name: \(userName)
-                    Guests: \(guestCount)
-                    Phone: \(phoneNumber)
-                    Children: \(childrenCount)
-                    Occasion: \(occasion)
-                    Notes: \(notes)
-                    """)
+                Text(previewText)
                 .foregroundStyle(.gray)
             }
         }
